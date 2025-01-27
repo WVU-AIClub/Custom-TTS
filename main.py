@@ -151,18 +151,18 @@ if __name__ == '__main__':
     wav_folder_path = 'wav_recordings'
     num_folder_path = 'numbered_files'
 
-    # # Not always needed
-    # for file in os.listdir(raw_folder_path):
-    #     convert_to_wav(raw_folder_path+"/"+file, wav_folder_path+"/"+f'{file.split(".")[0]}.wav')
+    # Not always needed
+    for file in os.listdir(raw_folder_path):
+        convert_to_wav(raw_folder_path+"/"+file, wav_folder_path+"/"+f'{file.split(".")[0]}.wav')
 
-    # # Step 1
-    # rename_files(wav_folder_path)
+    # Step 1
+    rename_files(wav_folder_path)
 
-    # # Step 2 ## BROKEN HEELLPPP!!!!
-    # transcribe(num_folder_path)
+    # Step 2 ## BROKEN HEELLPPP!!!!
+    transcribe(num_folder_path)
 
-    # # Step 3
-    # preprocess()
+    # Step 3
+    preprocess()
 
     # Step 4
     update_metadata()
