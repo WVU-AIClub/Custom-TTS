@@ -12,14 +12,14 @@ import torchaudio
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 
 import librosa, soundfile as sf
+# !pip install librosa
 
 
 def convert_to_wav(input_file, output_file):
     # Load the audio file
-    print(output_file)
+    print(input_file)
 
     audio = AudioSegment.from_file(input_file)
-    audio = audio.set_frame_rate(16000).set_channels(1) # Resample to 16 kHz mono
     audio.export(output_file, format='wav')
 
     print(f"Converted {input_file} to {output_file}")
@@ -49,34 +49,40 @@ def rename_files(folder_path):
 def transcribe(folder_path):
     output_file = os.path.join(folder_path, "lists.txt")
 
-    file_and_transcripts = []
+    
     wav_files_range = range(1,len(os.listdir(folder_path)) + 1)
+    file_and_transcripts = []
 
     model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-large-960h")
     processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-large-960h")
 
 
     for i in wav_files_range:
-
         wav_file = os.path.join(folder_path, f"{i}.wav")
 
         if os.path.exists(wav_file):
+            # Recognize the speech in the .wav file
             try:
                 waveform, sample_rate = torchaudio.load(wav_file)
-
+                
                 if waveform.shape[0] > 1:
                     waveform = torch.mean(waveform, dim=0, keepdim=True)
+
                 if sample_rate != 16000:
-                    resampler = torchaudio.transforms.Resample(
-                    orig_freq = sample_rate, new_freq=16000)
+                    resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
                     waveform = resampler(waveform)
 
+                waveform = waveform.squeeze(0)
                 # Process the waveform
                 input_values = processor(
                     waveform, return_tensors="pt", sampling_rate=16000).input_values
+                print(f"Input values shape: {input_values.shape}")
+
+
                 logits = model(input_values).logits
                 predicted_ids = torch.argmax(logits, dim=-1)
                 transcript = processor.decode(predicted_ids[0])
+
             except FileNotFoundError:
                 print(f"File not found: {wav_file}")
                 continue
@@ -124,7 +130,7 @@ if __name__ == '__main__':
     # rename_files(wav_folder_path)
 
     # Step 2 ## BROKEN HEELLPPP!!!!
-    #transcribe(num_folder_path)
+    transcribe(num_folder_path)
 
     # Step 3
     preprocess()
