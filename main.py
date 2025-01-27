@@ -128,7 +128,9 @@ def update_metadata():
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    for i in range(1, 165):
+    wav_files_range = range(1,len(os.listdir(input_folder)) + 1)
+
+    for i in wav_files_range:
         input_file = os.path.join(input_folder, f"{i}.wav")
         output_file = os.path.join(output_folder, f"{i}.wav")
 
@@ -159,7 +161,8 @@ if __name__ == '__main__':
     # # Step 2 ## BROKEN HEELLPPP!!!!
     # transcribe(num_folder_path)
 
-    # Step 3
-    preprocess()
+    # # Step 3
+    # preprocess()
 
-    #
+    # Step 4
+    update_metadata()
