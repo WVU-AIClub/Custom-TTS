@@ -14,6 +14,9 @@ from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 import librosa, soundfile as sf
 # !pip install librosa
 
+import taglib
+# !pip install pytaglib
+
 
 def convert_to_wav(input_file, output_file):
     # Load the audio file
@@ -99,23 +102,47 @@ def transcribe(folder_path):
 
 def preprocess():
     input_path = 'numbered_files'
-    output_path = 'output'
+    output_path = 'preproccessed_files'
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
     for filename in os.listdir(input_path):
-        filepath = os.path.join(input_path, filename) # should be file_path
-        y, sr = librosa.load(filepath, sr=22050)
+        if filename.endswith(".wav"):
+            filepath = os.path.join(input_path, filename) # should be file_path
+            y, sr = librosa.load(filepath, sr=22050)
 
-        #trim silence
-        trimmed_audio, _ = librosa.effects.trim(y, top_db=20)
-        normalized_audio = librosa.util.normalize(trimmed_audio)
+            #trim silence
+            trimmed_audio, _ = librosa.effects.trim(y, top_db=20)
+            #normalize audio
+            normalized_audio = librosa.util.normalize(trimmed_audio)
 
-        output_filepath = os.path.join(output_path, filename)
-        sf.write(output_filepath, normalized_audio, sr, subtype='PCM_16')
+            output_filepath = os.path.join(output_path, filename)
+            sf.write(output_filepath, normalized_audio, sr, subtype='PCM_16')
+    print("All .wav files have preprocessed and saved to the output folder.")
 
+def update_metadata():
+    input_folder = 'preproccessed_files'
+    output_folder = 'metadata_files'
 
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    for i in range(1, 165):
+        input_file = os.path.join(input_folder, f"{i}.wav")
+        output_file = os.path.join(output_folder, f"{i}.wav")
+
+        if os.path.exists(input_file):
+            with taglib.File(input_file) as audio:
+                audio.tags['TITLE'] = [f"{i}"]
+                audio.tags["TRACKNUMBER"] = [f"{i}"]
+
+                audio.save()
+            shutil.copy2(input_file, output_file)
+
+            print(f"Updated metadata for {i}.wav title={i}, track number={i}")
+        else:
+            print(f"File {i}.wav not found.")
 
 if __name__ == '__main__':
     raw_folder_path = 'raw_recordings'
@@ -129,8 +156,10 @@ if __name__ == '__main__':
     # # Step 1
     # rename_files(wav_folder_path)
 
-    # Step 2 ## BROKEN HEELLPPP!!!!
-    transcribe(num_folder_path)
+    # # Step 2 ## BROKEN HEELLPPP!!!!
+    # transcribe(num_folder_path)
 
     # Step 3
     preprocess()
+
+    #
