@@ -1,98 +1,96 @@
-import os, shutil
-# !pip install pydub
-from pydub import AudioSegment
+import os, glob, shutil
+import torch                        # !pip install torch
+import torchaudio                   # !pip install torchaudio
+from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor # !pip install transformers
+import librosa, soundfile as sf     # !pip install librosa
+from pydub import AudioSegment      # !pip install pydub
+import taglib                       # !pip install pytaglib
+
 # Install ffmpeg. On Windows go to ffmpeg.ord and add to your system's path
+# This is the only way to get pydub to work
 
-import torch
-# !pip install torch
-
-import torchaudio
-# !pip install torchaudio
-
-from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
-
-import librosa, soundfile as sf
-# !pip install librosa
-
-import taglib
-# !pip install pytaglib
-
-
-def convert_to_wav(input_file, output_file):
-    # Load the audio file
-    print(input_file)
-
-    audio = AudioSegment.from_file(input_file)
-    audio.export(output_file, format='wav')
-
-    print(f"Converted {input_file} to {output_file}")
-
-def rename_files(folder_path):
-
-    # Create the "numbered_files" directory, if it doesn't exist
-    output_folder = "numbered_files"
+def convert_audio(input_folder: str, output_folder: str) -> None:
+    """ Converts audio files from a given input folder to WAV format,
+    renames them sequentially, and saves them to an output folder.
+    Args:
+        input_folder (str): The path to the folder contianing the raw audio files
+        output_folder (str):    The path wherffe the converted and renamed WAV files will be saved.
+    """
     os.makedirs(output_folder, exist_ok=True)
 
-    files = os.listdir(folder_path)
+    print(f'Input folder: {input_folder}')
+    print(f'Output folder: {output_folder}')
 
-    print(f'Folder path: {folder_path}')
+    # Get all files from the input folder
+    files = [f for f in os.listdir(input_folder) if os.path.isfile(os.path.join(input_folder, f))]
     print(f'Files found: {len(files)}')
 
     for index, file in enumerate(files, start=1):
-        old_path = os.path.join(folder_path, file)
+        input_file_path = os.path.join(input_folder, file)
 
-        if os.path.isfile(old_path):
-            new_file_name = f'{index}.{file.split(".")[-1]}'
-            new_path = os.path.join(output_folder, new_file_name)
+        # Determine the new file name and path
+        output_file_name = f'{index}.wav'
+        output_file_path = os.path.join(output_folder, output_file_name)
 
-        shutil.copy(old_path, new_path)
-        print(f'Renamed: {file} -> {new_file_name}')
+        try:
+            # Convert the file to WAV format
+            audio = AudioSegment.from_file(input_file_path)
+            audio.export(output_file_path, format='wav')
+            print(f"Converted and renamed: {file} -> {output_file_name}")
+
+        except Exception as e:
+            print(f"Error processing {file}: {e}")
 
 
-def transcribe(folder_path):
-    output_file = os.path.join(folder_path, "lists.txt")
-
-    
-    wav_files_range = range(1,len(os.listdir(folder_path)) + 1)
+def transcribe(folder_path: str, transcript_file: str="!transcript.txt") -> None:
+    ''' Transcribes the data and then saves a lists of the transcript'''
+    output_file = os.path.join(folder_path, transcript_file)
     file_and_transcripts = []
 
-    model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-large-960h")
-    processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-large-960h")
+    try:
+        model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-large-960h")
+        processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-large-960h")
+        print("Model and processor loaded successfully.")
+    except Exception as e:
+        print(f"Failed to load model or processor: {e}")
+        return
 
+    wav_files = sorted(glob.glob(os.path.join(folder_path, "*.wav")), key=lambda x: \
+                       int(os.path.basename(x).split('.')[0]))
+    
+    if not wav_files:
+        print(f"No .wav files found in {folder_path}. Exiting...")
+        return
+    
+    for wav_file in wav_files:
+        try:
+            # Load and preprocess the audio
+            waveform, sample_rate = torchaudio.load(wav_file)
 
-    for i in wav_files_range:
-        wav_file = os.path.join(folder_path, f"{i}.wav")
+            if waveform.shape[0] > 1:
+                waveform = torch.mean(waveform, dim=0, keepdim=True)
 
-        if os.path.exists(wav_file):
-            # Recognize the speech in the .wav file
-            try:
-                waveform, sample_rate = torchaudio.load(wav_file)
-                
-                if waveform.shape[0] > 1:
-                    waveform = torch.mean(waveform, dim=0, keepdim=True)
+            if sample_rate != 16000:
+                resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
+                waveform = resampler(waveform)
 
-                if sample_rate != 16000:
-                    resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
-                    waveform = resampler(waveform)
+            waveform = waveform.squeeze(0)
 
-                waveform = waveform.squeeze(0)
-                # Process the waveform
-                input_values = processor(
-                    waveform, return_tensors="pt", sampling_rate=16000).input_values
-                print(f"Input values shape: {input_values.shape}")
+            # Process with the model
+            input_values = processor(waveform, return_tensors="pt", sampling_rate=16000).input_values
 
+            logits = model(input_values).logits
+            predicted_ids = torch.argmax(logits, dim=-1)
+            transcript = processor.decode(predicted_ids[0])
 
-                logits = model(input_values).logits
-                predicted_ids = torch.argmax(logits, dim=-1)
-                transcript = processor.decode(predicted_ids[0])
+            # Watch this LINE!!
+            temp = os.path.basename(wav_file)
+            file_and_transcripts.append(f"/contents/TTS-TT2/wavs/{temp}|{transcript}")
+            print(f"Transcribed {temp}.")
 
-            except FileNotFoundError:
-                print(f"File not found: {wav_file}")
-                continue
-
-            file_and_transcripts.append(f"/contents/TTS-TT2/wavs/{i}.wav|{transcript}")
-        else:
-            print(f"File not found: {wav_file}")
+        except Exception as e:
+            print(f"Skipping {wav_file} due to an error: {e}")
+            continue
             
     with open(output_file, "w") as f:
         for line in file_and_transcripts:
@@ -149,17 +147,12 @@ def update_metadata():
 if __name__ == '__main__':
     raw_folder_path = 'raw_recordings'
     wav_folder_path = 'wav_recordings'
-    num_folder_path = 'numbered_files'
-
-    # Not always needed
-    for file in os.listdir(raw_folder_path):
-        convert_to_wav(raw_folder_path+"/"+file, wav_folder_path+"/"+f'{file.split(".")[0]}.wav')
 
     # Step 1
-    rename_files(wav_folder_path)
+    convert_audio(raw_folder_path, wav_folder_path)
 
     # Step 2 ## BROKEN HEELLPPP!!!!
-    transcribe(num_folder_path)
+    transcribe(wav_folder_path)
 
     # Step 3
     preprocess()
