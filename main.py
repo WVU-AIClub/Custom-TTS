@@ -98,51 +98,45 @@ def transcribe(folder_path: str, transcript_file: str="!transcript.txt") -> None
 
     print(f"File '{output_file}' created successfully.")
 
-def preprocess():
-    input_path = 'numbered_files'
-    output_path = 'preproccessed_files'
 
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
-    for filename in os.listdir(input_path):
-        if filename.endswith(".wav"):
-            filepath = os.path.join(input_path, filename) # should be file_path
-            y, sr = librosa.load(filepath, sr=22050)
-
-            #trim silence
-            trimmed_audio, _ = librosa.effects.trim(y, top_db=20)
-            #normalize audio
-            normalized_audio = librosa.util.normalize(trimmed_audio)
-
-            output_filepath = os.path.join(output_path, filename)
-            sf.write(output_filepath, normalized_audio, sr, subtype='PCM_16')
-    print("All .wav files have preprocessed and saved to the output folder.")
-
-def update_metadata():
-    input_folder = 'preproccessed_files'
-    output_folder = 'metadata_files'
-
+def process_audio_files(input_folder:str, output_folder:str='processed_files') -> None:
+    ''' Preprocesses .wav files from the input folder, updates their metadata, and saves
+    them to a single output folder.
+    
+    Args:
+        input_folder (str): The folder containing the raw .wav files.
+        output_folder (str): The folder to save the final processed files.
+    '''
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    wav_files_range = range(1,len(os.listdir(input_folder)) + 1)
+    for filename in os.listdir(input_folder):
+        if filename.endswith(".wav"):
+            filepath = os.path.join(input_folder, filename)
 
-    for i in wav_files_range:
-        input_file = os.path.join(input_folder, f"{i}.wav")
-        output_file = os.path.join(output_folder, f"{i}.wav")
+            # Preprocessing
+            y, sr = librosa.load(filepath, sr=22050)
+            trimmed_audio, _ = librosa.effects.trim(y, top_db=20)
+            normalized_audio = librosa.util.normalize(trimmed_audio)
 
-        if os.path.exists(input_file):
-            with taglib.File(input_file) as audio:
-                audio.tags['TITLE'] = [f"{i}"]
-                audio.tags["TRACKNUMBER"] = [f"{i}"]
+            output_filepath = os.path.join(output_folder, filename)
+            sf.write(output_filepath, normalized_audio, sr, subtype='PCM_16')
+            
+            # Metadata update on the newly saved file
+            try:
+                file_number = int(os.path.splitext(filename)[0])
+            except ValueError:
+                print(f"Skipping metadata update for '{filename}': filename is not a number.")
+                continue
 
-                audio.save()
-            shutil.copy2(input_file, output_file)
+            with taglib.File(output_filepath, save_on_exit=True) as audio:
+                audio.tags['TITLE'] = [str(file_number)]
+                audio.tags['TRACKNUMBER'] = [str(file_number)]
 
-            print(f"Updated metadata for {i}.wav title={i}, track number={i}")
-        else:
-            print(f"File {i}.wav not found.")
+            print(f"Processed '{filename}'. Updated title and track number to '{file_number}'.")
+
+    print("\nAll .wav files have been processed and saved to the output folder.")
+
 
 if __name__ == '__main__':
     raw_folder_path = 'raw_recordings'
@@ -151,11 +145,8 @@ if __name__ == '__main__':
     # Step 1
     convert_audio(raw_folder_path, wav_folder_path)
 
-    # Step 2 ## BROKEN HEELLPPP!!!!
+    # Step 2
     transcribe(wav_folder_path)
 
     # Step 3
-    preprocess()
-
-    # Step 4
-    update_metadata()
+    process_audio_files(wav_folder_path)
