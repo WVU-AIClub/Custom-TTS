@@ -42,7 +42,7 @@ def convert_audio(input_folder: str, output_folder: str) -> None:
             print(f"Error processing {file}: {e}")
 
 
-def transcribe(folder_path: str, transcript_file: str="!transcript.txt") -> None:
+def transcribe(folder_path: str, transcript_file: str="metadata.csv") -> None:
     ''' Transcribes the data and then saves a lists of the transcript'''
     output_file = os.path.join(folder_path, transcript_file)
     file_and_transcripts = []
@@ -139,8 +139,11 @@ def process_audio_files(input_folder:str, output_folder:str='processed_files') -
 
 
 if __name__ == '__main__':
-    raw_folder_path = 'raw_recordings'
-    wav_folder_path = 'wav_recordings'
+    raw_folder_path = 'raws'
+    wav_folder_path = 'wavs'
+
+    # Step 0
+    # Check if audio file is too large and needs to be converted into smaller chunks
 
     # Step 1
     convert_audio(raw_folder_path, wav_folder_path)
