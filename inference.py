@@ -10,7 +10,7 @@ syn_config = SynthesisConfig(
     normalize_audio=False, # use raw audio from voice
 )
 
-voice = PiperVoice.load("/path/to/en_US-lessac-medium.onnx")
+voice = PiperVoice.load("voices/peter_griffin1.onnx")
 with wave.open("test.wav", "wb") as wav_file:
     voice.synthesize_wav("Welcome to the world of speech synthesis!", \
                          wav_file, syn_config=syn_config)
