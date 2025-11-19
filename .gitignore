@@ -2,3 +2,4 @@ ffmpeg-8.0-essentials_build
 tacotron2
 wget.exe
 .wget-hsts
+.venv
