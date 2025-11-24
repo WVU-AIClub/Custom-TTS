@@ -172,7 +172,8 @@ def process_audio_files(input_folder:str, output_folder:str='processed_files') -
 
 
 if __name__ == '__main__':
-    voice_folder = 'Peter'
+
+    voice_folder = input("Please enter folder name:")
 
     raw_folder_path = voice_folder + '/raws'
     split_folder_path = voice_folder + '/splits'
