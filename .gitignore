@@ -1,4 +1,23 @@
 .venv
-*.wav
 piper1-gpl/
 lightning_logs/
+
+# Python packaging / caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Stray synthesis outputs at the repo root
+/*.wav
+
+# Voices: track ONLY the Nate and Peter voice folders (in full),
+# ignore everything else under voices/.
+voices/*
+!voices/Nate/
+!voices/Peter/
+!voices/Nate/**
+!voices/Peter/**
