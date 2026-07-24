@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+requires = ["setuptools>=64", "wheel", "scikit-build", "cmake", "ninja"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,7 @@ name = "custom-tts"
 version = "0.1.0"
 description = "A CLI + Python package for building Piper TTS voice datasets and running synthesis."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10, <3.13"
 license = { text = "MIT" }
 authors = [{ name = "WVU AI Club" }]
 dependencies = [
@@ -18,6 +18,13 @@ dependencies = [
     "pytaglib>=3.0",
     "openai-whisper>=20231117",
     "piper-tts>=1.2",
+    "lightning>=2.6.5",
+    "pysilero-vad",
+    "pip",
+    "jsonargparse",
+    "ninja>=1.13.0",
+    "torchaudio>=2.11.0",
+    "onnxscript>=0.7.1",
 ]
 
 [project.optional-dependencies]
@@ -34,3 +41,8 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 custom_tts = ["configs/*.yaml"]
+
+[tool.uv.workspace]
+members = [
+    "Custom",
+]

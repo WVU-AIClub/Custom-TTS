@@ -6,7 +6,7 @@ import os
 import subprocess
 import sys
 
-from custom_tts.config import Config
+from custom_tts.config import ExportConfig, Config
 from custom_tts.training.checkpoints import find_latest_checkpoint
 from custom_tts.utils.logging import get_logger
 
@@ -25,18 +25,15 @@ def export_onnx(voice_folder: str, config: Config) -> str:
     ``export.log_dir``. The output defaults to ``<voice_folder>/<voice_name>.onnx``.
 
     Args:
-        voice_folder: Path to the voice project folder.
         config: Resolved :class:`~custom_tts.config.Config`.
 
     Returns:
         Path to the written ``.onnx`` file.
     """
-    exp = config.export
-
-    checkpoint = exp.checkpoint or find_latest_checkpoint(exp.log_dir)
+    checkpoint = config.export.checkpoint or find_latest_checkpoint(config.export.log_dir)
 
     voice_name = resolve_voice_name(voice_folder, config)
-    output = exp.output or os.path.join(voice_folder, f"{voice_name}.onnx")
+    output = config.export.output or os.path.join(voice_folder, f"{voice_name}.onnx")
 
     cmd = [
         sys.executable,

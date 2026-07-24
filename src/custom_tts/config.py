@@ -49,21 +49,24 @@ class PreprocessConfig:
 class TrainConfig:
     """Settings for Piper training (``python -m piper.train fit``)."""
 
-    voice_name: str | None = None  # defaults to the voice folder name
+    voice_folder: str | None = None  
+    voice_name: str | None = None # defaults to the voice folder name
     espeak_voice: str = "en-us"
     batch_size: int = 4
     max_epochs: int | None = None  # optional cap on training epochs
-    cache_dirname: str = "piper_cache"
-    config_filename: str | None = None  # defaults to "<voice_name>.onnx.json"
+    cache_dir: str = "piper_cache"
+    config: str | None = None  # defaults to "<voice_name>.onnx.json"
     ckpt_path: str | None = None  # optional resume/pretrained checkpoint (path or URL)
     log_dir: str = "lightning_logs"
-    export_after: bool = False  # export to ONNX after Ctrl+C or normal stop
+    export_after: bool = True  # export to ONNX after Ctrl+C or normal stop
+    num_workers: int = 1 # The 'train_dataloader' does not have many workers which may be a bottleneck.
 
 
 @dataclass
 class ExportConfig:
     """Settings for exporting a checkpoint to ONNX."""
 
+    voice_folder: str | None = None  # defaults to the voice folder name
     checkpoint: str | None = None  # explicit .ckpt; if null, use the latest found
     log_dir: str = "lightning_logs"
     output: str | None = None  # defaults to "<voice_folder>/<voice_name>.onnx"

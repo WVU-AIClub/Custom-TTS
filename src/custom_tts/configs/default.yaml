@@ -32,6 +32,7 @@ preprocess:
 # ---------------------------------------------------------------------------
 train:
   # Voice name passed to Piper. Defaults to the voice folder name when null.
+  voice_folder: null
   voice_name: null
   # eSpeak-ng voice/phonemizer (run `espeak-ng --voices` for options).
   espeak_voice: en-us
@@ -40,15 +41,15 @@ train:
   # Optional cap on training epochs (null = Lightning default / run until stopped).
   max_epochs: null
   # Subfolder (inside the voice folder) for the phoneme/spec cache.
-  cache_dirname: piper_cache
-  # Piper config JSON filename inside the voice folder. Defaults to "<voice_name>.onnx.json".
-  config_filename: null
+  cache_dir: piper_cache
   # Optional checkpoint to resume from or fine-tune (local path or URL).
-  ckpt_path: null
+  ckpt_path: 'https://huggingface.co/datasets/rhasspy/piper-checkpoints/resolve/main/en/en_US/lessac/medium/epoch%3D2164-step%3D1355540.ckpt'
   # Where Lightning writes version_*/checkpoints.
   log_dir: lightning_logs
   # Export to ONNX automatically after training stops (typically Ctrl+C).
-  export_after: false
+  export_after: true
+  # The 'train_dataloader' does not have many workers which may be a bottleneck.
+  num_workers: 1
 
 # ---------------------------------------------------------------------------
 # Export checkpoint -> ONNX (python -m piper.train.export_onnx)

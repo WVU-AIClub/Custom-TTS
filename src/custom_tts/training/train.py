@@ -7,6 +7,7 @@ import subprocess
 import sys
 
 from custom_tts.config import Config
+from custom_tts.training import find_latest_checkpoint
 from custom_tts.training.export import export_onnx, resolve_voice_name
 from custom_tts.utils.logging import get_logger
 
@@ -25,9 +26,9 @@ def build_train_command(voice_folder: str, config: Config) -> list[str]:
     voice_name = resolve_voice_name(voice_folder, config)
     csv_path = os.path.join(voice_folder, pre.metadata_filename)
     audio_dir = os.path.join(voice_folder, pre.dirs.outputs)
-    cache_dir = os.path.join(voice_folder, train.cache_dirname)
-    config_filename = train.config_filename or f"{voice_name}.onnx.json"
-    config_path = os.path.join(voice_folder, config_filename)
+    cache_dir = os.path.join(voice_folder, train.cache_dir)
+    model_name = f"{voice_name}.onnx.json"
+    config_path = os.path.join(voice_folder, model_name)
 
     cmd = [
         sys.executable,
@@ -50,6 +51,8 @@ def build_train_command(voice_folder: str, config: Config) -> list[str]:
         config_path,
         "--data.batch_size",
         str(train.batch_size),
+        "--data.num_workers",
+        str(train.num_workers),
     ]
 
     if train.max_epochs is not None:
@@ -69,10 +72,12 @@ def run_training(voice_folder: str, config: Config) -> None:
     after training stops.
 
     Args:
-        voice_folder: Path to the voice project folder.
         config: Resolved :class:`~custom_tts.config.Config`.
     """
-    os.makedirs(os.path.join(voice_folder, config.train.cache_dirname), exist_ok=True)
+    os.makedirs(os.path.join(voice_folder, config.train.cache_dir), exist_ok=True)
+
+    config.train.log_dir = find_latest_checkpoint() if config.train.log_dir == "latest" \
+        else config.train.log_dir
 
     cmd = build_train_command(voice_folder, config)
     logger.info("Starting training: %s", " ".join(cmd))
