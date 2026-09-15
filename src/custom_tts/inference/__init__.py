@@ -1,4 +1,4 @@
-"""Inference modules for custom_tts."""
+"""F5-TTS inference API."""
 
 from custom_tts.inference.synthesize import synthesize
 

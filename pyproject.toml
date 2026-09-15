@@ -1,34 +1,21 @@
 [build-system]
-requires = ["setuptools>=64", "wheel", "scikit-build", "cmake", "ninja"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "custom-tts"
-version = "0.1.0"
-description = "A CLI + Python package for building Piper TTS voice datasets and running synthesis."
+version = "0.2.0"
+description = "Cross-platform F5-TTS voice cloning CLI and Python package."
 readme = "README.md"
 requires-python = ">=3.10, <3.13"
-license = { text = "MIT" }
+license = "MIT"
 authors = [{ name = "WVU AI Club" }]
-dependencies = [
-    "pyyaml>=6.0",
-    "librosa>=0.10",
-    "soundfile>=0.12",
-    "pydub>=0.25",
-    "pytaglib>=3.0",
-    "openai-whisper>=20231117",
-    "piper-tts>=1.2",
-    "lightning>=2.6.5",
-    "pysilero-vad",
-    "pip",
-    "jsonargparse",
-    "ninja>=1.13.0",
-    "torchaudio>=2.11.0",
-    "onnxscript>=0.7.1",
-]
+dependencies = ["f5-tts==1.1.22", "faster-whisper>=1.2,<2"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0", "ruff>=0.1"]
+cpu = ["torch==2.11.0", "torchaudio==2.11.0"]
+cu128 = ["torch==2.11.0", "torchaudio==2.11.0"]
+cu130 = ["torch==2.11.0", "torchaudio==2.11.0"]
 
 [project.scripts]
 custom-tts = "custom_tts.cli:main"
@@ -39,10 +26,38 @@ Repository = "https://github.com/WVU-AIClub/Custom-TTS"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-data]
-custom_tts = ["configs/*.yaml"]
-
-[tool.uv.workspace]
-members = [
-    "Custom",
+[tool.uv]
+conflicts = [
+    [
+        { extra = "cpu" },
+        { extra = "cu128" },
+        { extra = "cu130" },
+    ],
 ]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu", marker = "sys_platform != 'darwin'" },
+    { index = "pytorch-cu128", extra = "cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { index = "pytorch-cu130", extra = "cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchaudio = [
+    { index = "pytorch-cpu", extra = "cpu", marker = "sys_platform != 'darwin'" },
+    { index = "pytorch-cu128", extra = "cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { index = "pytorch-cu130", extra = "cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true

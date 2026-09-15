@@ -1,8 +1,6 @@
-.venv
-piper1-gpl/
-lightning_logs/
+.venv/
 
-# Python packaging / caches
+# Python packaging and caches
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -11,11 +9,10 @@ dist/
 .pytest_cache/
 .ruff_cache/
 
-# Stray synthesis outputs at the repo root
+# Generated inference output
 /*.wav
 
-# Voices: track ONLY the Nate and Peter voice folders (in full),
-# ignore everything else under voices/.
+# Keep bundled examples; ignore private voice recordings added locally.
 voices/*
 !voices/Nate/
 !voices/Peter/
