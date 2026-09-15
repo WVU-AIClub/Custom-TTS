@@ -110,6 +110,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Export the model into an ONNX model type."
     )
     export.add_argument("voice_folder", help="Path to the voice folder.")
+    # TODO: Weird Error where the first time training can not handle a small batch_size
     export.add_argument("--checkpoint", help="explcit .ckpt; if null, use the latest found")
     export.add_argument("--log_dir", help="Path to log directory")
     export.add_argument("-o", "--output", help="Defaults to '<voice_folder>/<voice_name>.onnx'")

@@ -20,6 +20,7 @@ def build_train_command(voice_folder: str, config: Config) -> list[str]:
     Paths are derived from the voice folder and the preprocess/train config so
     training lines up with the output of ``custom-tts preprocess``.
     """
+    #TODO: Change lighthning logs to be saved within the voices
     pre = config.preprocess
     train = config.train
 
@@ -76,8 +77,8 @@ def run_training(voice_folder: str, config: Config) -> None:
     """
     os.makedirs(os.path.join(voice_folder, config.train.cache_dir), exist_ok=True)
 
-    config.train.log_dir = find_latest_checkpoint() if config.train.log_dir == "latest" \
-        else config.train.log_dir
+    config.train.ckpt_path = find_latest_checkpoint() if config.train.ckpt_path == "latest" \
+        else config.train.ckpt_path
 
     cmd = build_train_command(voice_folder, config)
     logger.info("Starting training: %s", " ".join(cmd))
